@@ -2,78 +2,72 @@
   "name": "Veo 3.1 TikTok带货视频自动生成",
   "nodes": [
     {
-      "id": "schedule-trigger",
-      "name": "定时触发 - 每天23:00",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "position": [240, 300],
       "parameters": {
         "rule": {
           "interval": [
             {
-              "triggerAtHour": 23,
-              "triggerAtMinute": 0
+              "triggerAtHour": 23
             }
           ]
         }
       },
+      "id": "schedule-trigger",
+      "name": "定时触发 - 每天23:00",
+      "position": [
+        240,
+        240
+      ],
+      "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2
     },
     {
-      "id": "google-sheets-read",
-      "name": "读取未完成记录",
-      "type": "n8n-nodes-base.googleSheets",
-      "position": [460, 300],
       "parameters": {
-        "operation": "read",
         "documentId": {
           "__rl": true,
+          "value": "1o9xX2NXScJIOIcceWSnywgmd-AS9ErnANc6bntIFJfs",
           "mode": "list",
-          "value": "YOUR_SPREADSHEET_ID"
+          "cachedResultName": "Tiktok视频广告",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1o9xX2NXScJIOIcceWSnywgmd-AS9ErnANc6bntIFJfs/edit?usp=drivesdk"
         },
         "sheetName": {
           "__rl": true,
+          "value": "gid=0",
           "mode": "list",
-          "value": "Sheet1"
+          "cachedResultName": "视频广告列表",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1o9xX2NXScJIOIcceWSnywgmd-AS9ErnANc6bntIFJfs/edit#gid=0"
         },
-        "options": {
-          "filterType": "string"
-        },
-        "filtersUI": {
-          "values": [
-            {
-              "lookupColumn": "Status",
-              "condition": "equals",
-              "value": "未完成"
-            }
-          ]
-        }
-      },
-      "credentials": {
-        "googleSheetsOAuth2Api": {
-          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
-          "name": "Google Sheets account"
-        }
-      },
-      "typeVersion": 4.5
-    },
-    {
-      "id": "split-batches",
-      "name": "循环处理每条记录",
-      "type": "n8n-nodes-base.splitInBatches",
-      "position": [680, 300],
-      "parameters": {
-        "batchSize": 1,
         "options": {}
       },
+      "id": "google-sheets-read",
+      "name": "读取未完成记录",
+      "position": [
+        464,
+        240
+      ],
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "OnE5tpNJs8R2ga6u",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "split-batches",
+      "name": "循环处理每条记录",
+      "position": [
+        688,
+        240
+      ],
+      "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3
     },
     {
-      "id": "set-request-data",
-      "name": "准备Veo请求数据",
-      "type": "n8n-nodes-base.set",
-      "position": [900, 300],
       "parameters": {
-        "mode": "manual",
         "assignments": {
           "assignments": [
             {
@@ -102,26 +96,27 @@
             }
           ]
         },
-        "options": {
-          "includeOtherFields": false
-        }
+        "options": {}
       },
+      "id": "set-request-data",
+      "name": "准备Veo请求数据",
+      "position": [
+        880,
+        144
+      ],
+      "type": "n8n-nodes-base.set",
       "typeVersion": 3.4
     },
     {
-      "id": "create-video",
-      "name": "调用Veo 3.1生成视频",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [1120, 300],
       "parameters": {
-        "url": "https://queue.fal.run/fal-ai/veo3",
         "method": "POST",
+        "url": "https://api.kie.ai/api/v1/veo/generate",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Key YOUR_FAL_API_KEY"
+              "value": "Bearer d866740c0e3309d56557a41790604111"
             },
             {
               "name": "Content-Type",
@@ -131,325 +126,859 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"prompt\": \"{{ $json.prompt }}\",\n  \"image_url\": \"{{ $json.product_image_url }}\",\n  \"duration\": 15\n}",
+        "jsonBody": "={\n  \"prompt\": \"{{ $json.prompt }}\",\n  \"imageUrls\": [\"{{ $json.product_image_url }}\"],\n  \"model\": \"veo3_fast\",\n  \"aspectRatio\": \"16:9\",\n  \"generationType\": \"REFERENCE_2_VIDEO\",\n  \"enableTranslation\": true\n}",
         "options": {}
       },
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "YOUR_FAL_API_CREDENTIAL_ID",
-          "name": "Fal.run API"
-        }
-      },
+      "id": "create-video",
+      "name": "调用kie.ai生成视频",
+      "position": [
+        1136,
+        176
+      ],
+      "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2
     },
     {
+      "parameters": {
+        "amount": 60
+      },
       "id": "wait-initial",
       "name": "等待60秒",
+      "position": [
+        1584,
+        176
+      ],
       "type": "n8n-nodes-base.wait",
-      "position": [1340, 300],
-      "parameters": {
-        "amount": 60,
-        "unit": "seconds"
-      },
-      "typeVersion": 1.1
+      "typeVersion": 1.1,
+      "webhookId": "039ceff3-fff8-46b3-a2a9-8e475d92e9b4"
     },
     {
-      "id": "check-status",
-      "name": "检查视频生成状态",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [1560, 300],
       "parameters": {
-        "url": "=https://queue.fal.run/fal-ai/veo3/requests/{{ $('调用Veo 3.1生成视频').item.json.request_id }}/status",
-        "method": "GET",
+        "url": "https://api.kie.ai/api/v1/veo/record-info",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "taskId",
+              "value": "={{ $json.data.taskId }}"
+            }
+          ]
+        },
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Key YOUR_FAL_API_KEY"
+              "value": "Bearer d866740c0e3309d56557a41790604112"
             }
           ]
         },
         "options": {}
       },
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "YOUR_FAL_API_CREDENTIAL_ID",
-          "name": "Fal.run API"
-        }
-      },
+      "id": "check-status",
+      "name": "检查视频生成状态",
+      "position": [
+        1808,
+        176
+      ],
+      "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2
     },
     {
-      "id": "check-completed",
-      "name": "判断是否完成",
-      "type": "n8n-nodes-base.if",
-      "position": [1780, 300],
       "parameters": {
         "conditions": {
           "options": {
-            "version": 2,
+            "version": 3,
+            "leftValue": "",
             "caseSensitive": true,
             "typeValidation": "strict"
           },
-          "combinator": "and",
           "conditions": [
             {
               "id": "status-check",
+              "leftValue": "={{ $json.data.successFlag }}",
               "operator": {
-                "name": "filter.operator.equals",
-                "type": "string",
+                "type": "number",
                 "operation": "equals"
               },
-              "leftValue": "={{ $json.status }}",
-              "rightValue": "COMPLETED"
+              "rightValue": 1
             }
-          ]
+          ],
+          "combinator": "and"
         },
         "options": {}
       },
+      "id": "check-completed",
+      "name": "判断是否完成",
+      "position": [
+        2032,
+        96
+      ],
+      "type": "n8n-nodes-base.if",
       "typeVersion": 2.3
     },
     {
+      "parameters": {
+        "amount": 30
+      },
       "id": "wait-retry",
       "name": "等待后重试",
+      "position": [
+        2256,
+        272
+      ],
       "type": "n8n-nodes-base.wait",
-      "position": [1780, 460],
-      "parameters": {
-        "amount": 30,
-        "unit": "seconds"
-      },
-      "typeVersion": 1.1
+      "typeVersion": 1.1,
+      "webhookId": "bbbb490e-4503-419b-8fc7-5d731a211d4b"
     },
     {
-      "id": "get-video-url",
-      "name": "获取视频URL",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [2000, 200],
       "parameters": {
-        "url": "=https://queue.fal.run/fal-ai/veo3/requests/{{ $('调用Veo 3.1生成视频').item.json.request_id }}",
-        "method": "GET",
+        "url": "={{ $json.data.response.resultUrls[0] }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Key YOUR_FAL_API_KEY"
+              "value": "Bearer YOUR_KIE_API_KEY"
             }
           ]
         },
         "options": {}
       },
-      "credentials": {
-        "httpHeaderAuth": {
-          "id": "YOUR_FAL_API_CREDENTIAL_ID",
-          "name": "Fal.run API"
-        }
-      },
+      "id": "get-video-url",
+      "name": "获取视频URL",
+      "position": [
+        2256,
+        48
+      ],
+      "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2
     },
     {
-      "id": "download-video",
-      "name": "下载视频文件",
-      "type": "n8n-nodes-base.httpRequest",
-      "position": [2220, 200],
       "parameters": {
-        "url": "={{ $json.video.url }}",
-        "method": "GET",
+        "url": "={{ $json.data.response.resultUrls[0] }}",
         "options": {
           "response": {
             "response": {
               "neverError": true,
-              "fullResponse": false,
               "responseFormat": "file"
             }
           }
         }
       },
+      "id": "download-video",
+      "name": "下载视频文件",
+      "position": [
+        2480,
+        48
+      ],
+      "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2
     },
     {
-      "id": "upload-drive",
-      "name": "上传到Google云盘",
-      "type": "n8n-nodes-base.googleDrive",
-      "position": [2440, 200],
       "parameters": {
-        "operation": "upload",
         "name": "={{ $now.format('yyyyLLddHHmmss') }}-tiktok-video.mp4",
         "driveId": {
           "__rl": true,
+          "value": "My Drive",
           "mode": "list",
-          "value": "My Drive"
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
         },
         "folderId": {
           "__rl": true,
+          "value": "root",
           "mode": "list",
-          "value": "YOUR_DRIVE_FOLDER_ID"
+          "cachedResultName": "/ (Root folder)",
+          "cachedResultUrl": "https://drive.google.com/drive"
         },
         "options": {}
       },
+      "id": "upload-drive",
+      "name": "上传到Google云盘",
+      "position": [
+        2704,
+        48
+      ],
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
       "credentials": {
         "googleDriveOAuth2Api": {
-          "id": "YOUR_GOOGLE_DRIVE_CREDENTIAL_ID",
+          "id": "SlP7tyEZKq4tIMSD",
           "name": "Google Drive account"
         }
-      },
-      "typeVersion": 3
+      }
     },
     {
-      "id": "update-sheet",
-      "name": "更新表格状态",
-      "type": "n8n-nodes-base.googleSheets",
-      "position": [2660, 200],
       "parameters": {
         "operation": "update",
         "documentId": {
           "__rl": true,
+          "value": "1o9xX2NXScJIOIcceWSnywgmd-AS9ErnANc6bntIFJfs",
           "mode": "list",
-          "value": "YOUR_SPREADSHEET_ID"
+          "cachedResultName": "Tiktok视频广告",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1o9xX2NXScJIOIcceWSnywgmd-AS9ErnANc6bntIFJfs/edit?usp=drivesdk"
         },
         "sheetName": {
           "__rl": true,
+          "value": "gid=0",
           "mode": "list",
-          "value": "Sheet1"
+          "cachedResultName": "视频广告列表",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1o9xX2NXScJIOIcceWSnywgmd-AS9ErnANc6bntIFJfs/edit#gid=0"
         },
         "columns": {
+          "mappingMode": "defineBelow",
           "value": {
-            "Status": "已完成",
-            "视频链接": "={{ $('上传到Google云盘').item.json.webViewLink }}",
-            "row_number": "={{ $('准备Veo请求数据').item.json.row_number }}"
+            "视频链接": "={{ $json.webViewLink }}",
+            "ID": "={{ $('读取未完成记录').item.json.ID }}",
+            "status": "success"
           },
+          "matchingColumns": [
+            "ID"
+          ],
           "schema": [
             {
               "id": "产品图",
+              "displayName": "产品图",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
               "type": "string",
-              "display": true
+              "canBeUsedToMatch": true,
+              "removed": true
             },
             {
               "id": "拍摄风格",
+              "displayName": "拍摄风格",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
               "type": "string",
-              "display": true
+              "canBeUsedToMatch": true,
+              "removed": true
             },
             {
-              "id": "Status",
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
               "type": "string",
-              "display": true
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "视频链接",
+              "displayName": "视频链接",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
               "type": "string",
-              "display": true
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
             },
             {
               "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
               "type": "number",
-              "display": true
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
             }
           ],
-          "mappingMode": "defineBelow",
-          "matchingColumns": ["row_number"]
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         },
         "options": {}
       },
+      "id": "update-sheet",
+      "name": "更新表格状态",
+      "position": [
+        2928,
+        240
+      ],
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "alwaysOutputData": true,
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "id": "OnE5tpNJs8R2ga6u",
           "name": "Google Sheets account"
         }
-      },
-      "typeVersion": 4.5
+      }
     },
     {
-      "id": "sticky-note-1",
-      "name": "说明-工作流概述",
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [240, 80],
       "parameters": {
-        "content": "# Veo 3.1 TikTok带货视频自动生成工作流\n\n## 功能说明\n- 每天晚上11点自动运行\n- 读取Google表格中状态为\"未完成\"的记录\n- 使用Veo 3.1根据产品图和拍摄风格生成视频\n- 上传视频到Google云盘\n- 更新表格状态为\"已完成\"并记录视频链接",
-        "height": 180,
-        "width": 400,
-        "color": 4
+        "conditions": {
+          "options": {
+            "version": 3,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "49c47324-8ddb-4e2b-acb5-95e0c2e4f444",
+              "leftValue": "={{ $json.code }}",
+              "rightValue": 200,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
-      "typeVersion": 1
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1360,
+        176
+      ],
+      "id": "ef46d605-914c-4492-a889-9041da214f1f",
+      "name": "判断是否调用生成视频成功"
     },
     {
-      "id": "sticky-note-2",
-      "name": "说明-表格结构",
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [240, 600],
       "parameters": {
-        "content": "## Google Sheets表格结构\n\n请创建包含以下列的表格：\n- **产品图**: 产品图片URL\n- **拍摄风格**: 拍摄风格描述（如：简约、炫酷、温馨等）\n- **Status**: 状态（填写\"未完成\"或留空）\n- **视频链接**: 自动填入生成的视频链接\n- **row_number**: 行号（隐藏列，自动生成）",
-        "height": 200,
-        "width": 380,
-        "color": 3
+        "method": "POST",
+        "url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=081f3f76-c343-4c6d-a83f-49028dc6b991",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"msgtype\": \"text\",\n  \"text\": {\n    \"content\": \"⚠️ TikTok视频生成失败\\n\\n📅 时间: {{ $now.format('yyyy-MM-dd HH:mm:ss') }}\\n🏷️ 任务ID: {{ $('准备Veo请求数据').item.json.row_number }}\\n📦 产品图: {{ $('准备Veo请求数据').item.json.product_image_url }}\\n🎬 拍摄风格: {{ $('准备Veo请求数据').item.json.shooting_style }}\\n\\n❌ 错误信息: {{ $json.msg || '未知错误' }}\\n🔍 响应码: {{ $json.code }}\"\n  }\n}",
+        "options": {}
       },
-      "typeVersion": 1
+      "id": "wework-failure-notify",
+      "name": "企微机器人-生成失败通知",
+      "position": [
+        1360,
+        400
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2
     },
     {
-      "id": "sticky-note-3",
-      "name": "说明-API配置",
-      "type": "n8n-nodes-base.stickyNote",
-      "position": [680, 600],
       "parameters": {
-        "content": "## 需要配置的API\n\n1. **Fal.run API Key** (Veo 3.1)\n   - 访问 https://fal.ai/\n   - 创建账号并获取API密钥\n   - 在\"调用Veo 3.1生成视频\"节点中配置\n\n2. **Google APIs**\n   - Google Sheets API\n   - Google Drive API\n   - OAuth 2.0凭据",
-        "height": 180,
-        "width": 320,
-        "color": 2
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1o9xX2NXScJIOIcceWSnywgmd-AS9ErnANc6bntIFJfs",
+          "mode": "list",
+          "cachedResultName": "Tiktok视频广告",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1o9xX2NXScJIOIcceWSnywgmd-AS9ErnANc6bntIFJfs/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "视频广告列表",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1o9xX2NXScJIOIcceWSnywgmd-AS9ErnANc6bntIFJfs/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "status": "fail",
+            "ID": "={{ $('读取未完成记录').item.json.ID }}"
+          },
+          "matchingColumns": [
+            "ID"
+          ],
+          "schema": [
+            {
+              "id": "产品图",
+              "displayName": "产品图",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "拍摄风格",
+              "displayName": "拍摄风格",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "视频链接",
+              "displayName": "视频链接",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ID",
+              "displayName": "ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
       },
-      "typeVersion": 1
+      "id": "d83b9718-1d38-4586-806b-0edcdd9836c6",
+      "name": "更新表格失败状态",
+      "position": [
+        1616,
+        432
+      ],
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "OnE5tpNJs8R2ga6u",
+          "name": "Google Sheets account"
+        }
+      }
     }
   ],
+  "pinData": {
+    "等待60秒": [
+      {
+        "json": {
+          "code": 200,
+          "msg": "success",
+          "data": {
+            "taskId": "6e1b6b6ec84f9f2bf7e413a10839c1ea"
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "检查视频生成状态": [
+      {
+        "json": {
+          "code": 200,
+          "msg": "success",
+          "data": {
+            "taskId": "6e1b6b6ec84f9f2bf7e413a10839c1ea",
+            "paramJson": "{\"aspectRatio\":\"16:9\",\"enableFallback\":false,\"enableTranslation\":true,\"generationType\":\"REFERENCE_2_VIDEO\",\"imageUrls\":[\"https://m.media-amazon.com/images/I/91Z36juLQVL._SL80_.jpg\"],\"model\":\"veo3_fast\",\"prompt\":\"TikTok带货视频，产品参考图：https://m.media-amazon.com/images/I/91Z36juLQVL._SL80_.jpg，拍摄风格：现代、轻松。请生成一段15秒的产品展示视频，风格要符合现代、轻松的要求，突出产品特色。\"}",
+            "response": {
+              "taskId": "6e1b6b6ec84f9f2bf7e413a10839c1ea",
+              "resolution": "720p",
+              "originUrls": null,
+              "resultUrls": [
+                "https://tempfile.aiquickdraw.com/v/6e1b6b6ec84f9f2bf7e413a10839c1ea_1767147690.mp4"
+              ],
+              "hasAudioList": [
+                true
+              ],
+              "seeds": [
+                34275
+              ]
+            },
+            "successFlag": 1,
+            "fallbackFlag": false,
+            "completeTime": 1767147692000,
+            "createTime": 1767147615000,
+            "errorCode": null,
+            "errorMessage": null
+          }
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "上传到Google云盘": [
+      {
+        "json": {
+          "kind": "drive#file",
+          "id": "1NCIfHc-i1fDzYusBvmALj9AkwMLjw1ts",
+          "name": "20251230213333-tiktok-video.mp4",
+          "mimeType": "video/mp4",
+          "starred": false,
+          "trashed": false,
+          "explicitlyTrashed": false,
+          "parents": [
+            "0AJUAnXTHxW4qUk9PVA"
+          ],
+          "spaces": [
+            "drive"
+          ],
+          "version": "4",
+          "webContentLink": "https://drive.google.com/uc?id=1NCIfHc-i1fDzYusBvmALj9AkwMLjw1ts&export=download",
+          "webViewLink": "https://drive.google.com/file/d/1NCIfHc-i1fDzYusBvmALj9AkwMLjw1ts/view?usp=drivesdk",
+          "iconLink": "https://drive-thirdparty.googleusercontent.com/16/type/video/mp4",
+          "hasThumbnail": false,
+          "thumbnailVersion": "0",
+          "viewedByMe": false,
+          "createdTime": "2025-12-31T02:34:06.021Z",
+          "modifiedTime": "2025-12-31T02:34:07.187Z",
+          "modifiedByMeTime": "2025-12-31T02:34:07.187Z",
+          "modifiedByMe": true,
+          "owners": [
+            {
+              "kind": "drive#user",
+              "displayName": "Sei Mark",
+              "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocKiuCJpkxR2Vb9Y2CXE3Ww-8fmpqqHE6dDPjN7BlVSuIY82neaW=s64",
+              "me": true,
+              "permissionId": "02050650241458960765",
+              "emailAddress": "peng250305917@gmail.com"
+            }
+          ],
+          "lastModifyingUser": {
+            "kind": "drive#user",
+            "displayName": "Sei Mark",
+            "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocKiuCJpkxR2Vb9Y2CXE3Ww-8fmpqqHE6dDPjN7BlVSuIY82neaW=s64",
+            "me": true,
+            "permissionId": "02050650241458960765",
+            "emailAddress": "peng250305917@gmail.com"
+          },
+          "shared": false,
+          "ownedByMe": true,
+          "downloadRestrictions": {
+            "itemDownloadRestriction": {
+              "restrictedForReaders": false,
+              "restrictedForWriters": false
+            },
+            "effectiveDownloadRestrictionWithContext": {
+              "restrictedForReaders": false,
+              "restrictedForWriters": false
+            }
+          },
+          "capabilities": {
+            "canAcceptOwnership": false,
+            "canAddChildren": false,
+            "canAddMyDriveParent": false,
+            "canChangeCopyRequiresWriterPermission": true,
+            "canChangeItemDownloadRestriction": true,
+            "canChangeSecurityUpdateEnabled": false,
+            "canChangeViewersCanCopyContent": true,
+            "canComment": true,
+            "canCopy": true,
+            "canDelete": true,
+            "canDisableInheritedPermissions": false,
+            "canDownload": true,
+            "canEdit": true,
+            "canEnableInheritedPermissions": true,
+            "canListChildren": false,
+            "canModifyContent": true,
+            "canModifyContentRestriction": true,
+            "canModifyEditorContentRestriction": true,
+            "canModifyOwnerContentRestriction": true,
+            "canModifyLabels": false,
+            "canMoveChildrenWithinDrive": false,
+            "canMoveItemIntoTeamDrive": true,
+            "canMoveItemOutOfDrive": true,
+            "canMoveItemWithinDrive": true,
+            "canReadLabels": false,
+            "canReadRevisions": true,
+            "canRemoveChildren": false,
+            "canRemoveContentRestriction": false,
+            "canRemoveMyDriveParent": true,
+            "canRename": true,
+            "canShare": true,
+            "canTrash": true,
+            "canUntrash": true
+          },
+          "viewersCanCopyContent": true,
+          "copyRequiresWriterPermission": false,
+          "writersCanShare": true,
+          "permissions": [
+            {
+              "kind": "drive#permission",
+              "id": "02050650241458960765",
+              "type": "user",
+              "emailAddress": "peng250305917@gmail.com",
+              "role": "owner",
+              "displayName": "peng250305917",
+              "deleted": false,
+              "pendingOwner": false
+            }
+          ],
+          "permissionIds": [
+            "02050650241458960765"
+          ],
+          "originalFilename": "20251230213333-tiktok-video.mp4",
+          "fullFileExtension": "mp4",
+          "fileExtension": "mp4",
+          "md5Checksum": "49b594138887e66f101362ca23862576",
+          "sha1Checksum": "61accb7d73ac640a9a6f15df009f4ef9fcc850c0",
+          "sha256Checksum": "6c7e8828693d84ad4fd0215fb37223f03e73a9a5af95d1bd1b8c5329b0d844af",
+          "size": "1790843",
+          "quotaBytesUsed": "1790843",
+          "headRevisionId": "0B5UAnXTHxW4qY2dKVEtDN3liZHVQWXU4azY2alUvSFdTcWhNPQ",
+          "isAppAuthorized": true,
+          "linkShareMetadata": {
+            "securityUpdateEligible": false,
+            "securityUpdateEnabled": true
+          },
+          "inheritedPermissionsDisabled": false
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
   "connections": {
-    "定时触发 - 每天23:00": {
-      "main": [[{"node": "读取未完成记录", "type": "main", "index": 0}]]
-    },
-    "读取未完成记录": {
-      "main": [[{"node": "循环处理每条记录", "type": "main", "index": 0}]]
-    },
-    "循环处理每条记录": {
-      "main": [[{"node": "准备Veo请求数据", "type": "main", "index": 0}]]
-    },
-    "准备Veo请求数据": {
-      "main": [[{"node": "调用Veo 3.1生成视频", "type": "main", "index": 0}]]
-    },
-    "调用Veo 3.1生成视频": {
-      "main": [[{"node": "等待60秒", "type": "main", "index": 0}]]
-    },
-    "等待60秒": {
-      "main": [[{"node": "检查视频生成状态", "type": "main", "index": 0}]]
-    },
-    "检查视频生成状态": {
-      "main": [[{"node": "判断是否完成", "type": "main", "index": 0}]]
-    },
     "判断是否完成": {
       "main": [
-        [{"node": "获取视频URL", "type": "main", "index": 0}],
-        [{"node": "等待后重试", "type": "main", "index": 0}]
+        [
+          {
+            "index": 0,
+            "node": "获取视频URL",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "node": "等待后重试",
+            "type": "main"
+          }
+        ]
       ]
     },
     "等待后重试": {
-      "main": [[{"node": "检查视频生成状态", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "检查视频生成状态",
+            "type": "main"
+          }
+        ]
+      ]
     },
     "获取视频URL": {
-      "main": [[{"node": "下载视频文件", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "下载视频文件",
+            "type": "main"
+          }
+        ]
+      ]
     },
     "下载视频文件": {
-      "main": [[{"node": "上传到Google云盘", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "上传到Google云盘",
+            "type": "main"
+          }
+        ]
+      ]
     },
     "上传到Google云盘": {
-      "main": [[{"node": "更新表格状态", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "更新表格状态",
+            "type": "main"
+          }
+        ]
+      ]
     },
     "更新表格状态": {
-      "main": [[{"node": "循环处理每条记录", "type": "main", "index": 0}]]
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "循环处理每条记录",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "定时触发 - 每天23:00": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "读取未完成记录",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "读取未完成记录": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "循环处理每条记录",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "循环处理每条记录": {
+      "main": [
+        [],
+        [
+          {
+            "node": "准备Veo请求数据",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "准备Veo请求数据": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "调用kie.ai生成视频",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "调用kie.ai生成视频": {
+      "main": [
+        [
+          {
+            "node": "判断是否调用生成视频成功",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "等待60秒": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "检查视频生成状态",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "检查视频生成状态": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "判断是否完成",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "判断是否调用生成视频成功": {
+      "main": [
+        [
+          {
+            "node": "等待60秒",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "企微机器人-生成失败通知",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "企微机器人-生成失败通知": {
+      "main": [
+        [
+          {
+            "node": "更新表格失败状态",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "更新表格失败状态": {
+      "main": [
+        [
+          {
+            "node": "循环处理每条记录",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
+  "active": false,
   "settings": {
-    "executionOrder": "v1"
+    "executionOrder": "v1",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "saveManualExecutions": true,
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
   },
-  "staticData": null,
-  "tags": [],
-  "triggerCount": 1,
+  "versionId": "c17f6498-2fc0-4e33-b1ee-ad8c86a6b005",
   "meta": {
-    "templateCredsSetupCompleted": false
-  }
+    "templateCredsSetupCompleted": true,
+    "instanceId": "64edfea79ef4f30159f60aedbdbf3636a6b8534da6bfa9d46f965d0bd217af09"
+  },
+  "id": "ENDzJT0u4uxZZqfz",
+  "tags": []
 }
