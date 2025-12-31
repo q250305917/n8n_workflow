@@ -1,0 +1,455 @@
+{
+  "name": "Veo 3.1 TikTok带货视频自动生成",
+  "nodes": [
+    {
+      "id": "schedule-trigger",
+      "name": "定时触发 - 每天23:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 23,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "typeVersion": 1.2
+    },
+    {
+      "id": "google-sheets-read",
+      "name": "读取未完成记录",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [460, 300],
+      "parameters": {
+        "operation": "read",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "YOUR_SPREADSHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Sheet1"
+        },
+        "options": {
+          "filterType": "string"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Status",
+              "condition": "equals",
+              "value": "未完成"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "typeVersion": 4.5
+    },
+    {
+      "id": "split-batches",
+      "name": "循环处理每条记录",
+      "type": "n8n-nodes-base.splitInBatches",
+      "position": [680, 300],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "set-request-data",
+      "name": "准备Veo请求数据",
+      "type": "n8n-nodes-base.set",
+      "position": [900, 300],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "product-image",
+              "name": "product_image_url",
+              "type": "string",
+              "value": "={{ $json['产品图'] }}"
+            },
+            {
+              "id": "shooting-style",
+              "name": "shooting_style",
+              "type": "string",
+              "value": "={{ $json['拍摄风格'] }}"
+            },
+            {
+              "id": "row-number",
+              "name": "row_number",
+              "type": "number",
+              "value": "={{ $json.row_number }}"
+            },
+            {
+              "id": "prompt",
+              "name": "prompt",
+              "type": "string",
+              "value": "={{ 'TikTok带货视频，产品参考图：' + $json['产品图'] + '，拍摄风格：' + $json['拍摄风格'] + '。请生成一段15秒的产品展示视频，风格要符合' + $json['拍摄风格'] + '的要求，突出产品特色。' }}"
+            }
+          ]
+        },
+        "options": {
+          "includeOtherFields": false
+        }
+      },
+      "typeVersion": 3.4
+    },
+    {
+      "id": "create-video",
+      "name": "调用Veo 3.1生成视频",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1120, 300],
+      "parameters": {
+        "url": "https://queue.fal.run/fal-ai/veo3",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Key YOUR_FAL_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"{{ $json.prompt }}\",\n  \"image_url\": \"{{ $json.product_image_url }}\",\n  \"duration\": 15\n}",
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_FAL_API_CREDENTIAL_ID",
+          "name": "Fal.run API"
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "wait-initial",
+      "name": "等待60秒",
+      "type": "n8n-nodes-base.wait",
+      "position": [1340, 300],
+      "parameters": {
+        "amount": 60,
+        "unit": "seconds"
+      },
+      "typeVersion": 1.1
+    },
+    {
+      "id": "check-status",
+      "name": "检查视频生成状态",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [1560, 300],
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/veo3/requests/{{ $('调用Veo 3.1生成视频').item.json.request_id }}/status",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Key YOUR_FAL_API_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_FAL_API_CREDENTIAL_ID",
+          "name": "Fal.run API"
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "check-completed",
+      "name": "判断是否完成",
+      "type": "n8n-nodes-base.if",
+      "position": [1780, 300],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "version": 2,
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "status-check",
+              "operator": {
+                "name": "filter.operator.equals",
+                "type": "string",
+                "operation": "equals"
+              },
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "COMPLETED"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "typeVersion": 2.3
+    },
+    {
+      "id": "wait-retry",
+      "name": "等待后重试",
+      "type": "n8n-nodes-base.wait",
+      "position": [1780, 460],
+      "parameters": {
+        "amount": 30,
+        "unit": "seconds"
+      },
+      "typeVersion": 1.1
+    },
+    {
+      "id": "get-video-url",
+      "name": "获取视频URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [2000, 200],
+      "parameters": {
+        "url": "=https://queue.fal.run/fal-ai/veo3/requests/{{ $('调用Veo 3.1生成视频').item.json.request_id }}",
+        "method": "GET",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Key YOUR_FAL_API_KEY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "YOUR_FAL_API_CREDENTIAL_ID",
+          "name": "Fal.run API"
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "download-video",
+      "name": "下载视频文件",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [2220, 200],
+      "parameters": {
+        "url": "={{ $json.video.url }}",
+        "method": "GET",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "fullResponse": false,
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "typeVersion": 4.2
+    },
+    {
+      "id": "upload-drive",
+      "name": "上传到Google云盘",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [2440, 200],
+      "parameters": {
+        "operation": "upload",
+        "name": "={{ $now.format('yyyyLLddHHmmss') }}-tiktok-video.mp4",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "YOUR_DRIVE_FOLDER_ID"
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "YOUR_GOOGLE_DRIVE_CREDENTIAL_ID",
+          "name": "Google Drive account"
+        }
+      },
+      "typeVersion": 3
+    },
+    {
+      "id": "update-sheet",
+      "name": "更新表格状态",
+      "type": "n8n-nodes-base.googleSheets",
+      "position": [2660, 200],
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "YOUR_SPREADSHEET_ID"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": "Sheet1"
+        },
+        "columns": {
+          "value": {
+            "Status": "已完成",
+            "视频链接": "={{ $('上传到Google云盘').item.json.webViewLink }}",
+            "row_number": "={{ $('准备Veo请求数据').item.json.row_number }}"
+          },
+          "schema": [
+            {
+              "id": "产品图",
+              "type": "string",
+              "display": true
+            },
+            {
+              "id": "拍摄风格",
+              "type": "string",
+              "display": true
+            },
+            {
+              "id": "Status",
+              "type": "string",
+              "display": true
+            },
+            {
+              "id": "视频链接",
+              "type": "string",
+              "display": true
+            },
+            {
+              "id": "row_number",
+              "type": "number",
+              "display": true
+            }
+          ],
+          "mappingMode": "defineBelow",
+          "matchingColumns": ["row_number"]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets account"
+        }
+      },
+      "typeVersion": 4.5
+    },
+    {
+      "id": "sticky-note-1",
+      "name": "说明-工作流概述",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [240, 80],
+      "parameters": {
+        "content": "# Veo 3.1 TikTok带货视频自动生成工作流\n\n## 功能说明\n- 每天晚上11点自动运行\n- 读取Google表格中状态为\"未完成\"的记录\n- 使用Veo 3.1根据产品图和拍摄风格生成视频\n- 上传视频到Google云盘\n- 更新表格状态为\"已完成\"并记录视频链接",
+        "height": 180,
+        "width": 400,
+        "color": 4
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-note-2",
+      "name": "说明-表格结构",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [240, 600],
+      "parameters": {
+        "content": "## Google Sheets表格结构\n\n请创建包含以下列的表格：\n- **产品图**: 产品图片URL\n- **拍摄风格**: 拍摄风格描述（如：简约、炫酷、温馨等）\n- **Status**: 状态（填写\"未完成\"或留空）\n- **视频链接**: 自动填入生成的视频链接\n- **row_number**: 行号（隐藏列，自动生成）",
+        "height": 200,
+        "width": 380,
+        "color": 3
+      },
+      "typeVersion": 1
+    },
+    {
+      "id": "sticky-note-3",
+      "name": "说明-API配置",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [680, 600],
+      "parameters": {
+        "content": "## 需要配置的API\n\n1. **Fal.run API Key** (Veo 3.1)\n   - 访问 https://fal.ai/\n   - 创建账号并获取API密钥\n   - 在\"调用Veo 3.1生成视频\"节点中配置\n\n2. **Google APIs**\n   - Google Sheets API\n   - Google Drive API\n   - OAuth 2.0凭据",
+        "height": 180,
+        "width": 320,
+        "color": 2
+      },
+      "typeVersion": 1
+    }
+  ],
+  "connections": {
+    "定时触发 - 每天23:00": {
+      "main": [[{"node": "读取未完成记录", "type": "main", "index": 0}]]
+    },
+    "读取未完成记录": {
+      "main": [[{"node": "循环处理每条记录", "type": "main", "index": 0}]]
+    },
+    "循环处理每条记录": {
+      "main": [[{"node": "准备Veo请求数据", "type": "main", "index": 0}]]
+    },
+    "准备Veo请求数据": {
+      "main": [[{"node": "调用Veo 3.1生成视频", "type": "main", "index": 0}]]
+    },
+    "调用Veo 3.1生成视频": {
+      "main": [[{"node": "等待60秒", "type": "main", "index": 0}]]
+    },
+    "等待60秒": {
+      "main": [[{"node": "检查视频生成状态", "type": "main", "index": 0}]]
+    },
+    "检查视频生成状态": {
+      "main": [[{"node": "判断是否完成", "type": "main", "index": 0}]]
+    },
+    "判断是否完成": {
+      "main": [
+        [{"node": "获取视频URL", "type": "main", "index": 0}],
+        [{"node": "等待后重试", "type": "main", "index": 0}]
+      ]
+    },
+    "等待后重试": {
+      "main": [[{"node": "检查视频生成状态", "type": "main", "index": 0}]]
+    },
+    "获取视频URL": {
+      "main": [[{"node": "下载视频文件", "type": "main", "index": 0}]]
+    },
+    "下载视频文件": {
+      "main": [[{"node": "上传到Google云盘", "type": "main", "index": 0}]]
+    },
+    "上传到Google云盘": {
+      "main": [[{"node": "更新表格状态", "type": "main", "index": 0}]]
+    },
+    "更新表格状态": {
+      "main": [[{"node": "循环处理每条记录", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [],
+  "triggerCount": 1,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}
