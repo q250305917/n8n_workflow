@@ -15,7 +15,7 @@
       "name": "定时触发 - 每天23:00",
       "position": [
         240,
-        240
+        592
       ],
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2
@@ -42,7 +42,7 @@
       "name": "读取未完成记录",
       "position": [
         464,
-        240
+        592
       ],
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -61,7 +61,7 @@
       "name": "循环处理每条记录",
       "position": [
         688,
-        240
+        592
       ],
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3
@@ -101,8 +101,8 @@
       "id": "set-request-data",
       "name": "准备Veo请求数据",
       "position": [
-        880,
-        144
+        912,
+        272
       ],
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4
@@ -116,7 +116,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "Bearer d866740c0e3309d56557a41790604111"
+              "value": "Bearer d866740c0e3309d56557a41790604112"
             },
             {
               "name": "Content-Type",
@@ -126,14 +126,14 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"prompt\": \"{{ $json.prompt }}\",\n  \"imageUrls\": [\"{{ $json.product_image_url }}\"],\n  \"model\": \"veo3_fast\",\n  \"aspectRatio\": \"16:9\",\n  \"generationType\": \"REFERENCE_2_VIDEO\",\n  \"enableTranslation\": true\n}",
+        "jsonBody": "={\n  \"prompt\": \"{{ $json.output }}\",\n  \"imageUrls\": [\"{{ $('准备Veo请求数据').item.json.product_image_url }}\"],\n  \"model\": \"veo3_fast\",\n  \"aspectRatio\": \"16:9\",\n  \"generationType\": \"REFERENCE_2_VIDEO\",\n  \"enableTranslation\": true\n}",
         "options": {}
       },
       "id": "create-video",
       "name": "调用kie.ai生成视频",
       "position": [
-        1136,
-        176
+        1488,
+        272
       ],
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2
@@ -145,7 +145,7 @@
       "id": "wait-initial",
       "name": "等待60秒",
       "position": [
-        1584,
+        1936,
         176
       ],
       "type": "n8n-nodes-base.wait",
@@ -178,7 +178,7 @@
       "id": "check-status",
       "name": "检查视频生成状态",
       "position": [
-        1808,
+        2160,
         176
       ],
       "type": "n8n-nodes-base.httpRequest",
@@ -211,7 +211,7 @@
       "id": "check-completed",
       "name": "判断是否完成",
       "position": [
-        2032,
+        2384,
         96
       ],
       "type": "n8n-nodes-base.if",
@@ -224,7 +224,7 @@
       "id": "wait-retry",
       "name": "等待后重试",
       "position": [
-        2256,
+        2608,
         272
       ],
       "type": "n8n-nodes-base.wait",
@@ -248,7 +248,7 @@
       "id": "get-video-url",
       "name": "获取视频URL",
       "position": [
-        2256,
+        2608,
         48
       ],
       "type": "n8n-nodes-base.httpRequest",
@@ -269,7 +269,7 @@
       "id": "download-video",
       "name": "下载视频文件",
       "position": [
-        2480,
+        2832,
         48
       ],
       "type": "n8n-nodes-base.httpRequest",
@@ -297,7 +297,7 @@
       "id": "upload-drive",
       "name": "上传到Google云盘",
       "position": [
-        2704,
+        3056,
         48
       ],
       "type": "n8n-nodes-base.googleDrive",
@@ -406,8 +406,8 @@
       "id": "update-sheet",
       "name": "更新表格状态",
       "position": [
-        2928,
-        240
+        3280,
+        400
       ],
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -446,8 +446,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1360,
-        176
+        1712,
+        272
       ],
       "id": "ef46d605-914c-4492-a889-9041da214f1f",
       "name": "判断是否调用生成视频成功"
@@ -473,8 +473,8 @@
       "id": "wework-failure-notify",
       "name": "企微机器人-生成失败通知",
       "position": [
-        1360,
-        400
+        1936,
+        416
       ],
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2
@@ -575,8 +575,8 @@
       "id": "d83b9718-1d38-4586-806b-0edcdd9836c6",
       "name": "更新表格失败状态",
       "position": [
-        1616,
-        432
+        2208,
+        640
       ],
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
@@ -587,190 +587,78 @@
           "name": "Google Sheets account"
         }
       }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {
+          "systemMessage": "提示词优化，直接输出优化后的文案，文案内容禁止使用双引号，仅支持使用单引号\n\n格式参考：[0-3秒] 阳光洒进现代厨房，轻松背景音乐起\\n[3-6秒] 特写：双手优雅拿起这款简约设计的咖啡壶\\n[6-9秒] 倒入热水，展示水流顺畅和精美滤网\\n[9-12秒] 咖啡缓缓流入下方透明壶中，香气仿佛溢出屏幕\\n[12-15秒] 产品旋转展示\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1136,
+        272
+      ],
+      "id": "04f3a499-81c5-4ae3-b897-894edac3c06e",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "glm-4.5-air",
+          "mode": "list",
+          "cachedResultName": "GLM-4.5-Air"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        1216,
+        496
+      ],
+      "id": "a585abfa-afc2-4f8c-b5ef-8c8a4014bc43",
+      "name": "Anthropic Chat Model",
+      "credentials": {
+        "anthropicApi": {
+          "id": "LFuyAB39CVfHQ94F",
+          "name": "Anthropic account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=081f3f76-c343-4c6d-a83f-49028dc6b991",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"msgtype\": \"text\",\n  \"text\": {\n    \"content\": \"✅ TikTok视频生成成功\\n\\n📅 时间: {{ $now.format('yyyy-MM-dd HH:mm:ss') }}\\n🏷️ 任务ID: {{ $('准备Veo请求数据').item.json.row_number }}\\n📦 视频地址:{{ $json['视频链接'] }}\\n🎬 拍摄风格: {{ $('准备Veo请求数据').item.json.shooting_style }}\\n\\n\"\n  }\n}",
+        "options": {}
+      },
+      "id": "73d0005b-20f1-4bf0-a907-ab73cf2ab801",
+      "name": "企微机器人-生成成功通知",
+      "position": [
+        3536,
+        384
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2
     }
   ],
-  "pinData": {
-    "等待60秒": [
-      {
-        "json": {
-          "code": 200,
-          "msg": "success",
-          "data": {
-            "taskId": "6e1b6b6ec84f9f2bf7e413a10839c1ea"
-          }
-        },
-        "pairedItem": {
-          "item": 0
-        }
-      }
-    ],
-    "检查视频生成状态": [
-      {
-        "json": {
-          "code": 200,
-          "msg": "success",
-          "data": {
-            "taskId": "6e1b6b6ec84f9f2bf7e413a10839c1ea",
-            "paramJson": "{\"aspectRatio\":\"16:9\",\"enableFallback\":false,\"enableTranslation\":true,\"generationType\":\"REFERENCE_2_VIDEO\",\"imageUrls\":[\"https://m.media-amazon.com/images/I/91Z36juLQVL._SL80_.jpg\"],\"model\":\"veo3_fast\",\"prompt\":\"TikTok带货视频，产品参考图：https://m.media-amazon.com/images/I/91Z36juLQVL._SL80_.jpg，拍摄风格：现代、轻松。请生成一段15秒的产品展示视频，风格要符合现代、轻松的要求，突出产品特色。\"}",
-            "response": {
-              "taskId": "6e1b6b6ec84f9f2bf7e413a10839c1ea",
-              "resolution": "720p",
-              "originUrls": null,
-              "resultUrls": [
-                "https://tempfile.aiquickdraw.com/v/6e1b6b6ec84f9f2bf7e413a10839c1ea_1767147690.mp4"
-              ],
-              "hasAudioList": [
-                true
-              ],
-              "seeds": [
-                34275
-              ]
-            },
-            "successFlag": 1,
-            "fallbackFlag": false,
-            "completeTime": 1767147692000,
-            "createTime": 1767147615000,
-            "errorCode": null,
-            "errorMessage": null
-          }
-        },
-        "pairedItem": {
-          "item": 0
-        }
-      }
-    ],
-    "上传到Google云盘": [
-      {
-        "json": {
-          "kind": "drive#file",
-          "id": "1NCIfHc-i1fDzYusBvmALj9AkwMLjw1ts",
-          "name": "20251230213333-tiktok-video.mp4",
-          "mimeType": "video/mp4",
-          "starred": false,
-          "trashed": false,
-          "explicitlyTrashed": false,
-          "parents": [
-            "0AJUAnXTHxW4qUk9PVA"
-          ],
-          "spaces": [
-            "drive"
-          ],
-          "version": "4",
-          "webContentLink": "https://drive.google.com/uc?id=1NCIfHc-i1fDzYusBvmALj9AkwMLjw1ts&export=download",
-          "webViewLink": "https://drive.google.com/file/d/1NCIfHc-i1fDzYusBvmALj9AkwMLjw1ts/view?usp=drivesdk",
-          "iconLink": "https://drive-thirdparty.googleusercontent.com/16/type/video/mp4",
-          "hasThumbnail": false,
-          "thumbnailVersion": "0",
-          "viewedByMe": false,
-          "createdTime": "2025-12-31T02:34:06.021Z",
-          "modifiedTime": "2025-12-31T02:34:07.187Z",
-          "modifiedByMeTime": "2025-12-31T02:34:07.187Z",
-          "modifiedByMe": true,
-          "owners": [
-            {
-              "kind": "drive#user",
-              "displayName": "Sei Mark",
-              "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocKiuCJpkxR2Vb9Y2CXE3Ww-8fmpqqHE6dDPjN7BlVSuIY82neaW=s64",
-              "me": true,
-              "permissionId": "02050650241458960765",
-              "emailAddress": "peng250305917@gmail.com"
-            }
-          ],
-          "lastModifyingUser": {
-            "kind": "drive#user",
-            "displayName": "Sei Mark",
-            "photoLink": "https://lh3.googleusercontent.com/a/ACg8ocKiuCJpkxR2Vb9Y2CXE3Ww-8fmpqqHE6dDPjN7BlVSuIY82neaW=s64",
-            "me": true,
-            "permissionId": "02050650241458960765",
-            "emailAddress": "peng250305917@gmail.com"
-          },
-          "shared": false,
-          "ownedByMe": true,
-          "downloadRestrictions": {
-            "itemDownloadRestriction": {
-              "restrictedForReaders": false,
-              "restrictedForWriters": false
-            },
-            "effectiveDownloadRestrictionWithContext": {
-              "restrictedForReaders": false,
-              "restrictedForWriters": false
-            }
-          },
-          "capabilities": {
-            "canAcceptOwnership": false,
-            "canAddChildren": false,
-            "canAddMyDriveParent": false,
-            "canChangeCopyRequiresWriterPermission": true,
-            "canChangeItemDownloadRestriction": true,
-            "canChangeSecurityUpdateEnabled": false,
-            "canChangeViewersCanCopyContent": true,
-            "canComment": true,
-            "canCopy": true,
-            "canDelete": true,
-            "canDisableInheritedPermissions": false,
-            "canDownload": true,
-            "canEdit": true,
-            "canEnableInheritedPermissions": true,
-            "canListChildren": false,
-            "canModifyContent": true,
-            "canModifyContentRestriction": true,
-            "canModifyEditorContentRestriction": true,
-            "canModifyOwnerContentRestriction": true,
-            "canModifyLabels": false,
-            "canMoveChildrenWithinDrive": false,
-            "canMoveItemIntoTeamDrive": true,
-            "canMoveItemOutOfDrive": true,
-            "canMoveItemWithinDrive": true,
-            "canReadLabels": false,
-            "canReadRevisions": true,
-            "canRemoveChildren": false,
-            "canRemoveContentRestriction": false,
-            "canRemoveMyDriveParent": true,
-            "canRename": true,
-            "canShare": true,
-            "canTrash": true,
-            "canUntrash": true
-          },
-          "viewersCanCopyContent": true,
-          "copyRequiresWriterPermission": false,
-          "writersCanShare": true,
-          "permissions": [
-            {
-              "kind": "drive#permission",
-              "id": "02050650241458960765",
-              "type": "user",
-              "emailAddress": "peng250305917@gmail.com",
-              "role": "owner",
-              "displayName": "peng250305917",
-              "deleted": false,
-              "pendingOwner": false
-            }
-          ],
-          "permissionIds": [
-            "02050650241458960765"
-          ],
-          "originalFilename": "20251230213333-tiktok-video.mp4",
-          "fullFileExtension": "mp4",
-          "fileExtension": "mp4",
-          "md5Checksum": "49b594138887e66f101362ca23862576",
-          "sha1Checksum": "61accb7d73ac640a9a6f15df009f4ef9fcc850c0",
-          "sha256Checksum": "6c7e8828693d84ad4fd0215fb37223f03e73a9a5af95d1bd1b8c5329b0d844af",
-          "size": "1790843",
-          "quotaBytesUsed": "1790843",
-          "headRevisionId": "0B5UAnXTHxW4qY2dKVEtDN3liZHVQWXU4azY2alUvSFdTcWhNPQ",
-          "isAppAuthorized": true,
-          "linkShareMetadata": {
-            "securityUpdateEligible": false,
-            "securityUpdateEnabled": true
-          },
-          "inheritedPermissionsDisabled": false
-        },
-        "pairedItem": {
-          "item": 0
-        }
-      }
-    ]
-  },
+  "pinData": {},
   "connections": {
     "判断是否完成": {
       "main": [
@@ -838,9 +726,9 @@
       "main": [
         [
           {
-            "index": 0,
-            "node": "循环处理每条记录",
-            "type": "main"
+            "node": "企微机器人-生成成功通知",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -883,9 +771,9 @@
       "main": [
         [
           {
-            "index": 0,
-            "node": "调用kie.ai生成视频",
-            "type": "main"
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
           }
         ]
       ]
@@ -962,6 +850,39 @@
           }
         ]
       ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "调用kie.ai生成视频",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Anthropic Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "企微机器人-生成成功通知": {
+      "main": [
+        [
+          {
+            "node": "循环处理每条记录",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -974,7 +895,7 @@
     "callerPolicy": "workflowsFromSameOwner",
     "availableInMCP": false
   },
-  "versionId": "c17f6498-2fc0-4e33-b1ee-ad8c86a6b005",
+  "versionId": "9be3023a-849a-4b03-8755-108473092db3",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "64edfea79ef4f30159f60aedbdbf3636a6b8534da6bfa9d46f965d0bd217af09"
